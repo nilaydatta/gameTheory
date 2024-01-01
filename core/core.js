@@ -1,19 +1,23 @@
 import { strategies } from "./strategies.js";
 
 // Variable declarations
-export const tournament = [];
+export let tournament = [];
 export let Player1, Player2, game;
 
 // HTML DOM selectors
 export const tournamantSection = document.getElementById("tournamantSection");
 export const winStrategySection = document.getElementById("winStrategySection");
-export const winPlayerNameSection = document.getElementById(
-  "winPlayerNameSection"
-);
-export const currentRoundSection = document.getElementById(
-  "currentRoundSection"
-);
+export const winPlayerNameSection = document.getElementById("winPlayerNameSection");
+export const currentRoundSection = document.getElementById("currentRoundSection");
 export const strategiesList = document.getElementById("strategiesList");
+export const roundFullDataDisplaySectionTbody = document.getElementById("roundFullDataDisplaySectionTbody");
+export const roundFullDataDisplaySectionTfoot = document.getElementById("roundFullDataDisplaySectionTfoot");
+export const playerInfoRoundSection = document.getElementById("playerInfoRoundSection");
+export const firstPlayerStrategy = document.getElementById("firstPlayerStrategy");
+export const secondPlayerStrategy = document.getElementById("secondPlayerStrategy");
+export const firstPlayerName = document.getElementById("firstPlayerName");
+export const secondPlayerName = document.getElementById("secondPlayerName");
+export const setTotalRounds = document.getElementById("setTotalRounds");
 
 // Button DOM selectors
 export const btnStartGame = document.getElementById("btnStartGame");
@@ -23,9 +27,6 @@ export const btnClearConsole = document.getElementById("btnClearConsole");
 export const btnAddTournament = document.getElementById("btnAddTournament");
 export const btnfindWinStr = document.getElementById("btnfindWinStr");
 export const btnfindWinName = document.getElementById("btnfindWinName");
-export const roundFullDataDisplaySectionTbody = document.getElementById("roundFullDataDisplaySectionTbody");
-export const roundFullDataDisplaySectionTfoot = document.getElementById("roundFullDataDisplaySectionTfoot");
-export const playerInfoRoundSection = document.getElementById("playerInfoRoundSection");
 
 // Define classes
 export class Player {
@@ -103,7 +104,7 @@ export class Game {
       result.loserName = Player1.name;
       result.loserStrategy = Player1.strategyName;
       result.comment = `<strong>${Player2.name} (${Player2.strategyName})</strong> wins with <strong>${player2Score}</strong>! <strong>${Player1.name} (${Player1.strategyName})</strong> scored <strong>${player1Score}</strong> | :)`;
-      result.type="normal";
+      result.type="win";
     } else {
       result.comment = `Draw! Players: <strong>${Player1.name}-${Player1.strategyName}</strong> and <strong>${Player2.name}-${Player2.strategyName}</strong> | :|`;
       result.type="draw";
@@ -116,7 +117,7 @@ export class Game {
       `Score board: ${Player1.name} (${Player1.strategyName}) and ${Player2.name} (${Player2.strategyName})`
     );
     console.table(this.totalRound);
-    console.log(`Current round: ${this.count}`);
+    console.log(`Current round: ${this.count-1}`);
     const getRoundTableData = getRoundFullTableData.getData(this.info());
     roundFullDataDisplaySectionTbody.innerHTML = getRoundTableData.row;
     roundFullDataDisplaySectionTfoot.innerHTML = getRoundTableData.footer;
@@ -125,21 +126,20 @@ export class Game {
     let findWinner = {
       winnerName: "",
       winnerStrategy: "",
+      type: "normal",
     };
     if (this.count > this.noOfRounds) {
       findWinner = this.findWinner();
       console.log("Game over!!");
     } else {
-      const player1Move = Player1.strategy.calcMove(this.info(), "player2Move");
-      const player2Move = Player2.strategy.calcMove(this.info(), "player1Move");
+      const player1Move = Player1.strategy.calcMove(this.info(), "player2Move", "player1Move");
+      const player2Move = Player2.strategy.calcMove(this.info(), "player1Move", "player2Move");
       this.saveRound(player1Move, player2Move);
       this.display();
       findWinner.winnerName = Player1.name;
       findWinner.loserName = Player2.name;
-      findWinner.winnerStrategy =
-        this.totalRound[this.totalRound.length - 1].player1Score;
-      findWinner.loserStrategy =
-        this.totalRound[this.totalRound.length - 1].player2Score;
+      findWinner.winnerStrategy = this.totalRound[this.totalRound.length - 1].player1Score;
+      findWinner.loserStrategy = this.totalRound[this.totalRound.length - 1].player2Score;
       if (this.count === this.noOfRounds) {
         findWinner = this.findWinner();
         this.count++;
@@ -154,14 +154,8 @@ export class Game {
       return;
     } else {
       while (this.count < this.noOfRounds) {
-        const player1Move = Player1.strategy.calcMove(
-          this.info(),
-          "player2Move"
-        );
-        const player2Move = Player2.strategy.calcMove(
-          this.info(),
-          "player1Move"
-        );
+        const player1Move = Player1.strategy.calcMove(this.info(), "player2Move", "player1Move");
+        const player2Move = Player2.strategy.calcMove(this.info(), "player1Move", "player2Move");
         this.saveRound(player1Move, player2Move);
       }
       this.display();
@@ -175,45 +169,114 @@ export class Game {
       currentRoundSection.innerHTML = `<div class="alert alert-success" role="alert"><strong>Result: </strong><br/>${findWinner.comment}. <br/>Winner name: <strong>${findWinner.winnerName}</strong>. Winner strategy: <strong>${findWinner.winnerStrategy}</strong>. Loser name: <strong>${findWinner.loserName}</strong>. Loser strategy: <strong>${findWinner.loserStrategy}</strong></div>`;
     } else if (findWinner.type === "draw") {
       currentRoundSection.innerHTML = `<div class="alert alert-warning" role="alert"><strong>Result: </strong>${findWinner.comment}.</div>`;
-    } else {
+    } else if (findWinner.type === "normal") {
       currentRoundSection.innerHTML = `<div class="alert alert-info" role="alert"><strong>Round: ${this.count}</strong><br/>Players: <strong>${findWinner.winnerName}-${findWinner.winnerStrategy}</strong> and <strong>${findWinner.loserName}-${findWinner.loserStrategy}</strong>.</div>`;
+    } else {
+      currentRoundSection.innerHTML = `N/A`;
     }
   }
 }
 
 export class Initialize {
-  static start() {
+  static start(e) {
     console.clear();
-    const strategyKeys = Object.keys(strategies);
-    currentRoundSection.innerHTML = "No rounds played!";
-    const player1name = prompt("Enter first player name?");
-    let player1strategy = prompt(
-      `Enter first player strategy? Choose from ${strategyKeys.join(", ")}`
-    ).toLowerCase();
-    while (strategyKeys.indexOf(player1strategy) === -1) {
-      player1strategy = prompt(
-        `Invalid Strategy! Please choose from list: ${strategyKeys.join(", ")}`
-      ).toLowerCase();
+    e.preventDefault();
+    e.stopPropagation();
+    let [player1name, player1strategy, player2name, player2strategy, totalRounds] = ["", "", "", "", 0];
+    player1name = firstPlayerName.value;
+    player1strategy = firstPlayerStrategy.value;
+    player2name = secondPlayerName.value;
+    player2strategy = secondPlayerStrategy.value;
+    totalRounds = parseInt(setTotalRounds.value, 10);
+    console.log(`${player1name}-${player1strategy}, ${player2name}-${player2strategy}, ${totalRounds}`);
+    const validateCheck = Initialize.validateGameInformation({
+      player1name: player1name,
+      player1strategy: player1strategy,
+      player2name: player2name,
+      player2strategy: player2strategy,
+      totalRounds: totalRounds,
+    });
+    if(validateCheck) {
+      Player1 = new Player(player1name, strategies[player1strategy]);
+      Player2 = new Player(player2name, strategies[player2strategy]);
+      game = new Game(parseInt(totalRounds, 10));
+      console.log(game);
+      btnNextRound.disabled = false;
+      btnPlay.disabled = false;
+      playerInfoRoundSection.innerHTML = `<tr><th scope="col">Round</th><th scope="col">${player1name} Move</th><th scope="col">${player1name} Score</th><th scope="col">${player2name} Move</th><th scope="col">${player2name} Score</th></tr>`;
+    } else {
+      playerInfoRoundSection.innerHTML = "";
     }
-    const player2name = prompt("Enter second player name?");
-    let player2strategy = prompt(
-      `Enter second player strategy? Choose from ${strategyKeys.join(", ")}`
-    ).toLowerCase();
-    while (strategyKeys.indexOf(player2strategy) === -1) {
-      player2strategy = prompt(
-        `Invalid Strategy! Please choose from list: ${strategyKeys.join(", ")}`
-      ).toLowerCase();
-    }
-    const noofrounds = prompt("Enter no of rounds?");
-    Player1 = new Player(player1name, strategies[player1strategy]);
-    Player2 = new Player(player2name, strategies[player2strategy]);
-    game = new Game(parseInt(noofrounds));
-    console.log(game);
-    btnNextRound.disabled = false;
-    btnPlay.disabled = false;
-    playerInfoRoundSection.innerHTML = `<tr><th scope="col">Round</th><th scope="col">${player1name} Move</th><th scope="col">${player1name} Score</th><th scope="col">${player2name} Move</th><th scope="col">${player2name} Score</th></tr>`;
     roundFullDataDisplaySectionTbody.innerHTML = "No rounds played!";
     roundFullDataDisplaySectionTfoot.innerHTML = "";
+    currentRoundSection.innerHTML = "No rounds played!";
+  }
+  static validateGameInformation(gameInfo) {
+    let check = [];
+    if(Initialize.validateString(gameInfo.player1name)) {
+      firstPlayerName.classList.remove("is-invalid");
+      firstPlayerName.classList.add("is-valid");
+      check.push("true");
+    } else {
+      firstPlayerName.classList.add("is-invalid");
+      firstPlayerName.classList.remove("is-valid");
+      check.push("false");
+    }
+    if(Initialize.validateString(gameInfo.player2name)) {
+      secondPlayerName.classList.remove("is-invalid");
+      secondPlayerName.classList.add("is-valid");
+      check.push("true");
+    } else {
+      secondPlayerName.classList.add("is-invalid");
+      secondPlayerName.classList.remove("is-valid");
+      check.push("false");
+    }
+    if(Initialize.validateString(gameInfo.player1strategy)) {
+      firstPlayerStrategy.classList.remove("is-invalid");
+      firstPlayerStrategy.classList.add("is-valid");
+      check.push("true");
+    } else {
+      firstPlayerStrategy.classList.add("is-invalid");
+      firstPlayerStrategy.classList.remove("is-valid");
+      check.push("false");
+    }
+    if(Initialize.validateString(gameInfo.player2strategy)) {
+      secondPlayerStrategy.classList.remove("is-invalid");
+      secondPlayerStrategy.classList.add("is-valid");
+      check.push("true");
+    } else {
+      secondPlayerStrategy.classList.add("is-invalid");
+      secondPlayerStrategy.classList.remove("is-valid");
+      check.push("false");
+    }
+    if(Initialize.validateNumber(gameInfo.totalRounds)) {
+      setTotalRounds.classList.remove("is-invalid");
+      setTotalRounds.classList.add("is-valid");
+      check.push("true");
+    } else {
+      setTotalRounds.classList.add("is-invalid");
+      setTotalRounds.classList.remove("is-valid");
+      check.push("false");
+    }
+    if(check.indexOf("false") === -1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  static validateString(str) {
+    if(str === "" || str === null || str === undefined || typeof(str) !== 'string') {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  static validateNumber(num) {
+    if(typeof(num) !== 'number' || num === NaN) {
+      return false;
+    } else {
+      return true;
+    }
   }
 }
 
@@ -236,6 +299,19 @@ export class PlayFull {
 export class ClearConsole {
   static start() {
     console.clear();
+    firstPlayerName.value = "";
+    secondPlayerName.value = "";
+    firstPlayerStrategy.innerHTML = getStrategiesList.getStrategyOptions();
+    secondPlayerStrategy.innerHTML = getStrategiesList.getStrategyOptions();
+    setTotalRounds.value = 1;
+    playerInfoRoundSection.innerHTML = "";
+    roundFullDataDisplaySectionTbody.innerHTML = "No rounds played!";
+    roundFullDataDisplaySectionTfoot.innerHTML = "";
+    currentRoundSection.innerHTML = "No rounds played!";
+    tournamantSection.innerHTML = "No matches yet! Play something... :(";
+    tournament = [...[]];
+    winStrategySection.innerHTML = "No champion strategies yet.";
+    winPlayerNameSection.innerHTML = "No champions yet.";
   }
 }
 
@@ -322,6 +398,14 @@ export class getStrategiesList {
     }
     return list;
   }
+  static getStrategyOptions() {
+    let text = ``;
+    for (const str in strategies) {
+      const name = strategies[str].getName();
+      text = text + `<option value="${str}">${name}</option>`;
+    }
+    return text;
+  }
 }
 
 export class getRoundFullTableData {
@@ -334,7 +418,7 @@ export class getRoundFullTableData {
       _player1Score = _player1Score + round.player1Score;
       _player2Score = _player2Score + round.player2Score;
     }
-    const footer = `<tr><td>Total:</td><td> </td><td>${_player1Score}</td> <td></td><td>${_player2Score}</td></tr>`;
+    const footer = `<tr><td><strong>Total:</strong></td><td> </td><td>${_player1Score}</td> <td></td><td>${_player2Score}</td></tr>`;
     return {
       row: row,
       footer: footer
@@ -350,7 +434,9 @@ btnClearConsole.addEventListener("click", ClearConsole.start);
 btnAddTournament.addEventListener("click", AddTournament.addTournament);
 btnfindWinStr.addEventListener("click", FindWinStr.findStr);
 btnfindWinName.addEventListener("click", FindWinName.findName);
-roundFullDataDisplaySectionTbody.innerHTML = "No rounds played!";
 
 // Render strategies list in UI
+roundFullDataDisplaySectionTbody.innerHTML = "No rounds played!";
 strategiesList.innerHTML = getStrategiesList.getData().join(", ");
+firstPlayerStrategy.innerHTML = getStrategiesList.getStrategyOptions();
+secondPlayerStrategy.innerHTML = getStrategiesList.getStrategyOptions();

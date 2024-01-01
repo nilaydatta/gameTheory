@@ -56,6 +56,13 @@ class UnForgiving {
       if(!info.total[info.current-1][oppPlayer]) {
         decision = false;
         return decision;
+      } else {
+        for(const round of info.total) {
+          if(round[oppPlayer] === false) {
+            decision = false;
+            return decision;
+          } 
+        }
       }
     }
     return decision;
@@ -108,6 +115,34 @@ class Random {
     return "Random";
   }
 };
+class Con {
+  static calcMove(info, oppPlayer, selfPlayer) {
+    const allowedDefects = Math.round(info.rounds * 0.3333) - 1;
+    const pos = 3;
+    if(info.current === info.rounds-1) {
+      return false;
+    } else {
+      let timesDefected = 0;
+      info.total.forEach(round => {
+        if(!round[selfPlayer]) {
+          timesDefected++;
+        }
+      });
+      if(timesDefected < allowedDefects) {
+        if((info.current+1) % pos === 0) {
+          return false;
+        } else {
+          return true;
+        }
+      } else {
+        return true;
+      }
+    }
+  }
+  static getName() {
+    return "Con";
+  }
+};
 
 // Define all strategies in a variable in key-value pair for easy reference and list them
 export const strategies = {
@@ -119,6 +154,7 @@ export const strategies = {
   random: Random,
   jump: Jump,
   endupkilling: EndUpKilling,
+  con: Con,
 };
 
 export default strategies;
