@@ -115,6 +115,7 @@ class Random {
     return "Random";
   }
 };
+
 class Con {
   static calcMove(info, oppPlayer, selfPlayer) {
     const allowedDefects = Math.round(info.rounds * 0.3333) - 1;
