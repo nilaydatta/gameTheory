@@ -122,3 +122,12 @@ export const strategies = {
 };
 
 export default strategies;
+
+// COPYCAT: Hello! I start with Cooperate, and afterwards, I just copy whatever you did in the last round. Meow
+// GRUDGER: Listen, pardner. I'll start cooperatin', and keep cooperatin', but if y'all ever cheat me, I'LL CHEAT YOU BACK 'TIL THE END OF TARNATION.
+// ALWAYS CHEAT: the strong shall eat the weak
+// ALWAYS COOPERATE: Let's be best friends! <3
+// DETECTIVE: First: I analyze you. I start: Cooperate, Cheat, Cooperate, Cooperate. If you cheat back, I'll act like Copycat. If you never cheat back, I'll act like Always Cheat, to exploit you. Elementary, my dear Watson.
+// COPYKITTEN: Hello! I'm like Copycat, except I Cheat back only after you Cheat me twice in a row. After all, the first one could be a mistake! Purrrrr
+// SIMPLETON: hi i try start cooperate. if you cooperate back, i do same thing as last move, even if it mistake. if you cheat back, i do opposite thing as last move, even if it mistake.
+// RANDOM: Monkey robot! Ninja pizza tacos! lol i'm so random (Just plays Cheat or Cooperate randomly with a 50/50 chance)

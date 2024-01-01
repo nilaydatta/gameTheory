@@ -23,6 +23,9 @@ export const btnClearConsole = document.getElementById("btnClearConsole");
 export const btnAddTournament = document.getElementById("btnAddTournament");
 export const btnfindWinStr = document.getElementById("btnfindWinStr");
 export const btnfindWinName = document.getElementById("btnfindWinName");
+export const roundFullDataDisplaySectionTbody = document.getElementById("roundFullDataDisplaySectionTbody");
+export const roundFullDataDisplaySectionTfoot = document.getElementById("roundFullDataDisplaySectionTfoot");
+export const playerInfoRoundSection = document.getElementById("playerInfoRoundSection");
 
 // Define classes
 export class Player {
@@ -75,12 +78,13 @@ export class Game {
     let player1Score = 0;
     let player2Score = 0;
     let result = {
-      winnerName: "No winner",
-      winnerStrategy: "No strategy winner",
-      loserName: "No loser",
-      loserStrategy: "No strategy loser",
+      winnerName: "N/A",
+      winnerStrategy: "N/A",
+      loserName: "N/A",
+      loserStrategy: "N/A",
       comment: "Draw!",
       total: this.totalRound,
+      type: "draw",
     };
     for (const round of this.totalRound) {
       player1Score = player1Score + round.player1Score;
@@ -92,14 +96,17 @@ export class Game {
       result.loserName = Player2.name;
       result.loserStrategy = Player2.strategyName;
       result.comment = `<strong>${Player1.name} (${Player1.strategyName})</strong> wins with <strong>${player1Score}</strong>! <strong>${Player2.name} (${Player2.strategyName})</strong> scored <strong>${player2Score}</strong> | :)`;
+      result.type="win";
     } else if (player2Score > player1Score) {
       result.winnerName = Player2.name;
       result.winnerStrategy = Player2.strategyName;
       result.loserName = Player1.name;
       result.loserStrategy = Player1.strategyName;
       result.comment = `<strong>${Player2.name} (${Player2.strategyName})</strong> wins with <strong>${player2Score}</strong>! <strong>${Player1.name} (${Player1.strategyName})</strong> scored <strong>${player1Score}</strong> | :)`;
+      result.type="normal";
     } else {
-      result.comment = `Draw! <strong>${Player1.name} (${Player1.strategyName})</strong> scored <strong>${player1Score}</strong>. <strong>${Player2.name} (${Player2.strategyName})</strong> scored <strong>${player2Score}</strong> | :(`;
+      result.comment = `Draw! Players: <strong>${Player1.name}-${Player1.strategyName}</strong> and <strong>${Player2.name}-${Player2.strategyName}</strong> | :|`;
+      result.type="draw";
     }
     console.log(result.comment);
     return result;
@@ -110,16 +117,17 @@ export class Game {
     );
     console.table(this.totalRound);
     console.log(`Current round: ${this.count}`);
+    const getRoundTableData = getRoundFullTableData.getData(this.info());
+    roundFullDataDisplaySectionTbody.innerHTML = getRoundTableData.row;
+    roundFullDataDisplaySectionTfoot.innerHTML = getRoundTableData.footer;
   }
   nextRound() {
     let findWinner = {
       winnerName: "",
       winnerStrategy: "",
-      type: "normal",
     };
     if (this.count > this.noOfRounds) {
       findWinner = this.findWinner();
-      findWinner.type = "win";
       console.log("Game over!!");
     } else {
       const player1Move = Player1.strategy.calcMove(this.info(), "player2Move");
@@ -134,7 +142,6 @@ export class Game {
         this.totalRound[this.totalRound.length - 1].player2Score;
       if (this.count === this.noOfRounds) {
         findWinner = this.findWinner();
-        findWinner.type = "win";
         this.count++;
       }
     }
@@ -161,14 +168,15 @@ export class Game {
       this.count++;
     }
     findWinner = this.findWinner();
-    findWinner.type = "win";
     this.displayRoundResult(findWinner);
   }
   displayRoundResult(findWinner) {
     if (findWinner.type === "win") {
-      currentRoundSection.innerHTML = `<ul class="list-group"><li class="list-group-item"><strong>Final result: </strong><br/>${findWinner.comment}. <br/>Winner name: <strong>${findWinner.winnerName}</strong>. Winner strategy: <strong>${findWinner.winnerStrategy}</strong>. Loser name: <strong>${findWinner.loserName}</strong>. Loser strategy: <strong>${findWinner.loserStrategy}</strong></li></ul>`;
+      currentRoundSection.innerHTML = `<div class="alert alert-success" role="alert"><strong>Result: </strong><br/>${findWinner.comment}. <br/>Winner name: <strong>${findWinner.winnerName}</strong>. Winner strategy: <strong>${findWinner.winnerStrategy}</strong>. Loser name: <strong>${findWinner.loserName}</strong>. Loser strategy: <strong>${findWinner.loserStrategy}</strong></div>`;
+    } else if (findWinner.type === "draw") {
+      currentRoundSection.innerHTML = `<div class="alert alert-warning" role="alert"><strong>Result: </strong>${findWinner.comment}.</div>`;
     } else {
-      currentRoundSection.innerHTML = `<ul class="list-group"><li class="list-group-item"><strong>Current round: ${this.count}</strong><br/>Players: <strong>${findWinner.winnerName}-${findWinner.winnerStrategy}</strong> and <strong>${findWinner.loserName}-${findWinner.loserStrategy}</strong>.</li></ul>`;
+      currentRoundSection.innerHTML = `<div class="alert alert-info" role="alert"><strong>Round: ${this.count}</strong><br/>Players: <strong>${findWinner.winnerName}-${findWinner.winnerStrategy}</strong> and <strong>${findWinner.loserName}-${findWinner.loserStrategy}</strong>.</div>`;
     }
   }
 }
@@ -203,6 +211,9 @@ export class Initialize {
     console.log(game);
     btnNextRound.disabled = false;
     btnPlay.disabled = false;
+    playerInfoRoundSection.innerHTML = `<tr><th scope="col">Round</th><th scope="col">${player1name} Move</th><th scope="col">${player1name} Score</th><th scope="col">${player2name} Move</th><th scope="col">${player2name} Score</th></tr>`;
+    roundFullDataDisplaySectionTbody.innerHTML = "No rounds played!";
+    roundFullDataDisplaySectionTfoot.innerHTML = "";
   }
 }
 
@@ -230,7 +241,15 @@ export class ClearConsole {
 
 export class AddTournament {
   static addTournament() {
-    tournament.push(game.findWinner());
+    const result = game.findWinner();
+    // if(tournament.length > 0) {
+    //   for(const item of tournament) {
+    //     if(item.id === result.id) {
+    //       return;
+    //     }
+    //   }
+    // }
+    tournament.push(result);
     let text = '<ul class="list-group">';
     for (const match of tournament) {
       text =
@@ -253,10 +272,9 @@ export class FindWinStr {
   static findStr() {
     let uniqueStrategies = new Object();
     for (const match of tournament) {
-      if (match.winnerStrategy !== "No strategy winner") {
+      if (match.winnerStrategy !== "N/A") {
         if (uniqueStrategies.hasOwnProperty(match.winnerStrategy)) {
-          uniqueStrategies[match.winnerStrategy] =
-            uniqueStrategies[match.winnerStrategy] + 1;
+          uniqueStrategies[match.winnerStrategy] = uniqueStrategies[match.winnerStrategy] + 1;
         } else {
           uniqueStrategies[match.winnerStrategy] = 1;
         }
@@ -277,7 +295,7 @@ export class FindWinName {
   static findName() {
     let uniqueNames = new Object();
     for (const match of tournament) {
-      if (match.winnerName !== "No winner") {
+      if (match.winnerName !== "N/A") {
         if (uniqueNames.hasOwnProperty(match.winnerName)) {
           uniqueNames[match.winnerName] = uniqueNames[match.winnerName] + 1;
         } else {
@@ -306,6 +324,24 @@ export class getStrategiesList {
   }
 }
 
+export class getRoundFullTableData {
+  static getData(gameData) {
+    let row = "";
+    let _player1Score = 0;
+    let _player2Score = 0;
+    for (const round of gameData.total) {
+      row = row + `<tr><td>${round.count}</td><td>${round.player1Move ? "Cooperate" : "Defect"}</td><td>${round.player1Score}</td><td>${round.player2Move ? "Cooperate" : "Defect"}</td><td>${round.player2Score}</td></tr>`;
+      _player1Score = _player1Score + round.player1Score;
+      _player2Score = _player2Score + round.player2Score;
+    }
+    const footer = `<tr><td>Total:</td><td> </td><td>${_player1Score}</td> <td></td><td>${_player2Score}</td></tr>`;
+    return {
+      row: row,
+      footer: footer
+    };
+  }
+}
+
 // Add event listeners to buttons
 btnStartGame.addEventListener("click", Initialize.start);
 btnNextRound.addEventListener("click", NextRound.start);
@@ -314,6 +350,7 @@ btnClearConsole.addEventListener("click", ClearConsole.start);
 btnAddTournament.addEventListener("click", AddTournament.addTournament);
 btnfindWinStr.addEventListener("click", FindWinStr.findStr);
 btnfindWinName.addEventListener("click", FindWinName.findName);
+roundFullDataDisplaySectionTbody.innerHTML = "No rounds played!";
 
 // Render strategies list in UI
 strategiesList.innerHTML = getStrategiesList.getData().join(", ");
